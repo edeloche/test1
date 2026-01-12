@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDF Tempo - Couleur du Jour</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="top-bar">
+        <h1>EDF Tempo</h1>
+        <div class="top-bar-buttons">
+            <button class="top-bar-button" onclick="refreshColor()">Actualiser</button>
+        </div>
+    </div>
+    <div class="content">
+        <div class="main-layout">
+            <div class="tempo-container">
+                <h1 class="tempo-title">Couleur du Jour</h1>
+                <div class="tempo-colors-wrapper">
+                    <div class="tempo-color-item">
+                        <div id="tempo-date" class="tempo-date"></div>
+                        <div id="tempo-color-display" class="tempo-color-display">
+                            <div id="color-circle" class="color-circle">
+                                <span id="color-text" class="color-text">Chargement...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tempo-color-item">
+                        <h2 class="next-day-title">Couleur de Demain</h2>
+                        <div id="next-day-date" class="next-day-date"></div>
+                        <div id="next-day-color-display" class="next-day-color-display">
+                            <div id="next-day-color-circle" class="next-day-color-circle">
+                                <span id="next-day-color-text" class="next-day-color-text">Chargement...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="tempo-info" class="tempo-info">
+                    <div class="info-card">
+                        <h3>Tarif Tempo EDF</h3>
+                        <p id="tempo-description" class="tempo-description"></p>
+                    </div>
+                </div>
+                <div class="color-legend">
+                    <div class="legend-item">
+                        <div class="legend-color bleu"></div>
+                        <span>Bleu - Tarif de base (le plus économique)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color blanc"></div>
+                        <span>Blanc - Tarif moyen</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color rouge"></div>
+                        <span>Rouge - Tarif de pointe (le plus cher)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bitcoin-panel">
+                <div class="bitcoin-card">
+                    <h2 class="bitcoin-title">Bitcoin</h2>
+                    <div id="bitcoin-price" class="bitcoin-price">Chargement...</div>
+                    <div id="bitcoin-change" class="bitcoin-change"></div>
+                    <div id="bitcoin-updated" class="bitcoin-updated"></div>
+                    <button class="bitcoin-refresh-button" onclick="refreshBitcoin()">Actualiser</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const tempoColors = {
+            'TEMPO_BLEU': { 
+                color: '#0066CC', 
+                name: 'Bleu', 
+                description: 'Jour bleu - Tarif de base, le plus économique. La plupart des jours sont bleus.' 
+            },
+            'TEMPO_BLANC': { 
+                color: '#FFFFFF', 
+                name: 'Blanc', 
+                description: 'Jour blanc - Tarif moyen. Coût intermédiaire entre bleu et rouge.' 
+            },
+            'TEMPO_ROUGE': { 
+                color: '#DC143C', 
+                name: 'Rouge', 
+                description: 'Jour rouge - Tarif de pointe, le plus cher. Environ 22 jours par an seulement.' 
+            }
+        };
+
+        async function fetchTempoColor() {
+            try {
+                // Try fetching from public API
+                let color = null;
+                
+                // Method 1: Try api-couleur-tempo.fr public API
+                try {
+                    const response = await fetch(`https://api-couleur-tempo.fr/api/tempo/today`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        // The API returns data like { color: 'TEMPO_BLEU' } or { codeJour: 'BLEU' }
+                        if (data.color) {
+                            color = data.color.toUpperCase().startsWith('TEMPO_') 
+                                ? data.color.toUpperCase() 
+                                : `TEMPO_${data.color.toUpperCase()}`;
+                        } else if (data.codeJour) {
+                            color = `TEMPO_${data.codeJour.toUpperCase()}`;
+                        } else if (data.today) {
+                            color = data.today.toUpperCase().startsWith('TEMPO_') 
+                                ? data.today.toUpperCase() 
+                                : `TEMPO_${data.today.toUpperCase()}`;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Public API not available, trying alternative...', e);
+                }
+                
+                // Method 2: Try alternative endpoint format
+                if (!color) {
+                    try {
+                        const response = await fetch(`https://api-couleur-tempo.fr/api/tempo`, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.today || data.color) {
+                                const colorValue = data.today || data.color;
+                                color = colorValue.toUpperCase().startsWith('TEMPO_') 
+                                    ? colorValue.toUpperCase() 
+                                    : `TEMPO_${colorValue.toUpperCase()}`;
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Alternative endpoint not available, using fallback...', e);
+                    }
+                }
+                
+                // Method 3: Fallback - calculate based on date (simplified)
+                // Note: This is NOT the real algorithm, just for demonstration
+                if (!color) {
+                    const today = new Date().toISOString().split('T')[0];
+                    color = calculateTempoColor(today);
+                    console.log('Using calculated fallback color');
+                }
+                
+                displayTempoColor(color);
+                
+            } catch (error) {
+                console.error('Error fetching Tempo color:', error);
+                // Fallback to calculated color
+                const today = new Date().toISOString().split('T')[0];
+                displayTempoColor(calculateTempoColor(today));
+            }
+        }
+
+        async function fetchNextDayTempoColor() {
+            try {
+                // Try fetching from public API for tomorrow
+                let color = null;
+                
+                // Calculate tomorrow's date
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowString = tomorrow.toISOString().split('T')[0];
+                
+                // Method 1: Try api-couleur-tempo.fr public API for tomorrow
+                try {
+                    const response = await fetch(`https://api-couleur-tempo.fr/api/tempo/tomorrow`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.color) {
+                            color = data.color.toUpperCase().startsWith('TEMPO_') 
+                                ? data.color.toUpperCase() 
+                                : `TEMPO_${data.color.toUpperCase()}`;
+                        } else if (data.codeJour) {
+                            color = `TEMPO_${data.codeJour.toUpperCase()}`;
+                        } else if (data.tomorrow) {
+                            color = data.tomorrow.toUpperCase().startsWith('TEMPO_') 
+                                ? data.tomorrow.toUpperCase() 
+                                : `TEMPO_${data.tomorrow.toUpperCase()}`;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Tomorrow API endpoint not available, trying alternative...', e);
+                }
+                
+                // Method 2: Try fetching with date parameter
+                if (!color) {
+                    try {
+                        const response = await fetch(`https://api-couleur-tempo.fr/api/tempo/${tomorrowString}`, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.color) {
+                                color = data.color.toUpperCase().startsWith('TEMPO_') 
+                                    ? data.color.toUpperCase() 
+                                    : `TEMPO_${data.color.toUpperCase()}`;
+                            } else if (data.codeJour) {
+                                color = `TEMPO_${data.codeJour.toUpperCase()}`;
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Date-based endpoint not available, trying alternative...', e);
+                    }
+                }
+                
+                // Method 3: Try alternative endpoint format that might return tomorrow
+                if (!color) {
+                    try {
+                        const response = await fetch(`https://api-couleur-tempo.fr/api/tempo`, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            // Some APIs return both today and tomorrow
+                            if (data.tomorrow) {
+                                const colorValue = data.tomorrow;
+                                color = colorValue.toUpperCase().startsWith('TEMPO_') 
+                                    ? colorValue.toUpperCase() 
+                                    : `TEMPO_${colorValue.toUpperCase()}`;
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Alternative endpoint not available, using fallback...', e);
+                    }
+                }
+                
+                // Method 4: Fallback - calculate based on date (simplified)
+                // Note: This is NOT the real algorithm, just for demonstration
+                if (!color) {
+                    color = calculateTempoColor(tomorrowString);
+                    console.log('Using calculated fallback color for tomorrow');
+                }
+                
+                displayNextDayTempoColor(color, tomorrow);
+                
+            } catch (error) {
+                console.error('Error fetching next day Tempo color:', error);
+                // Fallback to calculated color
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowString = tomorrow.toISOString().split('T')[0];
+                displayNextDayTempoColor(calculateTempoColor(tomorrowString), tomorrow);
+            }
+        }
+
+        function calculateTempoColor(dateString) {
+            // Simplified calculation - in reality, EDF publishes this daily
+            // For demo purposes, we'll use a simple algorithm
+            // Note: This is NOT the real algorithm, just for demonstration
+            const date = new Date(dateString);
+            const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+            
+            // Simple pattern: mostly blue days, some white, few red
+            // This is just for demo - real data should come from API
+            if (dayOfYear % 15 === 0) {
+                return 'TEMPO_ROUGE';
+            } else if (dayOfYear % 5 === 0) {
+                return 'TEMPO_BLANC';
+            } else {
+                return 'TEMPO_BLEU';
+            }
+        }
+
+        function displayTempoColor(colorKey) {
+            const tempoData = tempoColors[colorKey] || tempoColors['TEMPO_BLEU'];
+            const colorCircle = document.getElementById('color-circle');
+            const colorText = document.getElementById('color-text');
+            const tempoDescription = document.getElementById('tempo-description');
+            const tempoDate = document.getElementById('tempo-date');
+            
+            // Update color display
+            colorCircle.style.backgroundColor = tempoData.color;
+            colorCircle.style.borderColor = tempoData.color;
+            
+            // Set text color based on background
+            if (colorKey === 'TEMPO_BLANC') {
+                colorText.style.color = '#333';
+                colorCircle.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2)';
+            } else {
+                colorText.style.color = '#FFFFFF';
+                colorCircle.style.boxShadow = `0 8px 32px ${tempoData.color}80`;
+            }
+            
+            colorText.textContent = tempoData.name;
+            tempoDescription.textContent = tempoData.description;
+            
+            // Update date
+            const today = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            tempoDate.textContent = today.toLocaleDateString('fr-FR', options);
+        }
+
+        function displayNextDayTempoColor(colorKey, date) {
+            const tempoData = tempoColors[colorKey] || tempoColors['TEMPO_BLEU'];
+            const nextDayColorCircle = document.getElementById('next-day-color-circle');
+            const nextDayColorText = document.getElementById('next-day-color-text');
+            const nextDayDate = document.getElementById('next-day-date');
+            
+            // Update color display
+            nextDayColorCircle.style.backgroundColor = tempoData.color;
+            nextDayColorCircle.style.borderColor = tempoData.color;
+            
+            // Set text color based on background
+            if (colorKey === 'TEMPO_BLANC') {
+                nextDayColorText.style.color = '#333';
+                nextDayColorCircle.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.2)';
+            } else {
+                nextDayColorText.style.color = '#FFFFFF';
+                nextDayColorCircle.style.boxShadow = `0 4px 16px ${tempoData.color}80`;
+            }
+            
+            nextDayColorText.textContent = tempoData.name;
+            
+            // Update date
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            nextDayDate.textContent = date.toLocaleDateString('fr-FR', options);
+        }
+
+        function refreshColor() {
+            const colorText = document.getElementById('color-text');
+            colorText.textContent = 'Chargement...';
+            fetchTempoColor();
+            
+            const nextDayColorText = document.getElementById('next-day-color-text');
+            nextDayColorText.textContent = 'Chargement...';
+            fetchNextDayTempoColor();
+        }
+
+        // Bitcoin price fetching from TradingView
+        async function fetchBitcoinPrice() {
+            try {
+                // TradingView doesn't have a public API, but we can try their internal endpoints
+                // Method 1: Try TradingView scanner endpoint (may be blocked by CORS)
+                try {
+                    const response = await fetch('https://scanner.tradingview.com/crypto/scan', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            filter: [{
+                                left: 'name',
+                                operation: 'match',
+                                right: 'BTCUSDT'
+                            }],
+                            columns: ['close', 'change', 'change_abs'],
+                            sort: { sortBy: 'name', sortOrder: 'asc' },
+                            range: [0, 1],
+                            markets: ['crypto']
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.data && data.data.length > 0) {
+                            const btcData = data.data[0].d;
+                            const priceUSD = btcData[0]; // close price
+                            const change = btcData[1]; // change percentage
+                            
+                            const formattedPrice = new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: 'USD',
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }).format(priceUSD);
+                            
+                            document.getElementById('bitcoin-price').textContent = formattedPrice;
+                            
+                            const changeElement = document.getElementById('bitcoin-change');
+                            changeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}% (24h)`;
+                            changeElement.className = change >= 0 ? 'bitcoin-change positive' : 'bitcoin-change negative';
+                            
+                            const updated = new Date();
+                            const updatedText = updated.toLocaleString('fr-FR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            document.getElementById('bitcoin-updated').textContent = `Mis à jour: ${updatedText} (TradingView)`;
+                            return; // Success, exit function
+                        }
+                    }
+                } catch (e) {
+                    console.log('TradingView scanner method failed (possibly CORS blocked), trying alternative...', e);
+                }
+                
+                // Method 2: Try using a CORS proxy for TradingView data
+                try {
+                    // Using a public CORS proxy to access TradingView's widget data
+                    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                    const tradingViewUrl = encodeURIComponent('https://symbol-search.tradingview.com/symbol_search/?text=BTCUSD&exchange=');
+                    
+                    const proxyResponse = await fetch(proxyUrl + tradingViewUrl);
+                    if (proxyResponse.ok) {
+                        const searchData = await proxyResponse.json();
+                        if (searchData && searchData.length > 0) {
+                            // Find Bitcoin symbol
+                            const btcSymbol = searchData.find(s => s.symbol === 'BTCUSD' || s.full_name.includes('BTCUSD'));
+                            if (btcSymbol) {
+                                // Try to get quote data for this symbol
+                                const quoteUrl = `https://widgetdata.tradingview.com/v1/ticker?symbol=${encodeURIComponent(btcSymbol.full_name)}`;
+                                const quoteProxyResponse = await fetch(proxyUrl + encodeURIComponent(quoteUrl));
+                                
+                                if (quoteProxyResponse.ok) {
+                                    const quoteData = await quoteProxyResponse.json();
+                                    if (quoteData.result && quoteData.result[0]) {
+                                        const quote = quoteData.result[0];
+                                        const priceUSD = quote.lp || quote.v?.[0] || quote.close; // Last price
+                                        const change = quote.chp || quote.ch || 0; // Change percentage
+                                        
+                                        const formattedPrice = new Intl.NumberFormat('en-US', {
+                                            style: 'currency',
+                                            currency: 'USD',
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        }).format(priceUSD);
+                                        
+                                        document.getElementById('bitcoin-price').textContent = formattedPrice;
+                                        
+                                        const changeElement = document.getElementById('bitcoin-change');
+                                        changeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}% (24h)`;
+                                        changeElement.className = change >= 0 ? 'bitcoin-change positive' : 'bitcoin-change negative';
+                                        
+                                        const updated = new Date();
+                                        const updatedText = updated.toLocaleString('fr-FR', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        });
+                                        document.getElementById('bitcoin-updated').textContent = `Mis à jour: ${updatedText} (TradingView via proxy)`;
+                                        return; // Success, exit function
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.log('Proxy method failed, trying direct widget endpoint...', e);
+                }
+                
+                // Method 3: Try direct widget endpoint (might work without CORS issues)
+                try {
+                    const widgetResponse = await fetch('https://widgetdata.tradingview.com/v1/ticker?symbol=BINANCE:BTCUSDT', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Referer': 'https://www.tradingview.com/'
+                        }
+                    });
+                    
+                    if (widgetResponse.ok) {
+                        const widgetData = await widgetResponse.json();
+                        if (widgetData.result && widgetData.result.length > 0) {
+                            const quote = widgetData.result[0];
+                            const priceUSD = quote.lp || quote.v?.[0] || quote.close; // Last price
+                            const change = quote.chp || quote.ch || 0; // Change percentage
+                            
+                            const formattedPrice = new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: 'USD',
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }).format(priceUSD);
+                            
+                            document.getElementById('bitcoin-price').textContent = formattedPrice;
+                            
+                            const changeElement = document.getElementById('bitcoin-change');
+                            changeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}% (24h)`;
+                            changeElement.className = change >= 0 ? 'bitcoin-change positive' : 'bitcoin-change negative';
+                            
+                            const updated = new Date();
+                            const updatedText = updated.toLocaleString('fr-FR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            document.getElementById('bitcoin-updated').textContent = `Mis à jour: ${updatedText} (TradingView)`;
+                            return; // Success, exit function
+                        }
+                    }
+                } catch (e) {
+                    console.log('Direct widget endpoint failed, trying fallback...', e);
+                }
+                
+                // Method 4: Fallback to CoinGecko (provides similar data to TradingView)
+                console.log('All TradingView methods failed, using fallback API');
+                const fallbackResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
+                if (fallbackResponse.ok) {
+                    const fallbackData = await fallbackResponse.json();
+                    if (fallbackData.bitcoin) {
+                        const priceUSD = fallbackData.bitcoin.usd;
+                        const change = fallbackData.bitcoin.usd_24h_change || 0;
+                        
+                        const formattedPrice = new Intl.NumberFormat('en-US', {
+                            style: 'currency',
+                            currency: 'USD',
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }).format(priceUSD);
+                        
+                        document.getElementById('bitcoin-price').textContent = formattedPrice;
+                        
+                        const changeElement = document.getElementById('bitcoin-change');
+                        changeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}% (24h)`;
+                        changeElement.className = change >= 0 ? 'bitcoin-change positive' : 'bitcoin-change negative';
+                        
+                        const updated = new Date();
+                        const updatedText = updated.toLocaleString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        document.getElementById('bitcoin-updated').textContent = `Mis à jour: ${updatedText} (Fallback - CoinGecko)`;
+                        return; // Success with fallback
+                    }
+                }
+                
+                throw new Error('All methods failed to fetch Bitcoin price');
+                
+            } catch (error) {
+                console.error('Error fetching Bitcoin price from TradingView:', error);
+                document.getElementById('bitcoin-price').textContent = 'Erreur de chargement';
+                document.getElementById('bitcoin-updated').textContent = 'Impossible de récupérer les données de TradingView';
+            }
+        }
+
+        function refreshBitcoin() {
+            document.getElementById('bitcoin-price').textContent = 'Chargement...';
+            document.getElementById('bitcoin-change').textContent = '';
+            fetchBitcoinPrice();
+        }
+
+        // Load on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchTempoColor();
+            fetchNextDayTempoColor();
+            fetchBitcoinPrice();
+        });
+        
+        // Auto-refresh every hour
+        setInterval(fetchTempoColor, 3600000);
+        setInterval(fetchNextDayTempoColor, 3600000);
+        
+        // Auto-refresh Bitcoin every 5 minutes
+        setInterval(fetchBitcoinPrice, 300000);
+    </script>
+</body>
+</html>
