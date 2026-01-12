@@ -1,0 +1,405 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: #f5f5f5;
+}
+
+.top-bar {
+    width: 100%;
+    height: 60px;
+    background-color: #4CAF50;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.top-bar h1 {
+    color: white;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.top-bar-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.top-bar-button {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.top-bar-button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+}
+
+.top-bar-button:active {
+    transform: translateY(0);
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+.content {
+    margin-top: 60px;
+    padding: 40px 20px;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.main-layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.tempo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 200px);
+    text-align: center;
+    flex: 1;
+}
+
+.tempo-title {
+    font-size: 48px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.tempo-date {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 20px;
+    text-transform: capitalize;
+}
+
+.tempo-colors-wrapper {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    justify-content: center;
+    margin: 40px 0;
+    flex-wrap: wrap;
+}
+
+.tempo-color-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.tempo-color-display {
+    margin: 20px 0;
+}
+
+.color-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    border: 6px solid;
+    transition: all 0.5s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.color-text {
+    font-size: 36px;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 2px;
+}
+
+.tempo-info {
+    margin: 40px 0;
+    max-width: 600px;
+    width: 100%;
+}
+
+.info-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.info-card h3 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.tempo-description {
+    font-size: 16px;
+    color: #666;
+    line-height: 1.8;
+}
+
+.next-day-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.next-day-date {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 20px;
+    text-transform: capitalize;
+}
+
+.next-day-color-display {
+    margin: 20px 0;
+}
+
+.next-day-color-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    border: 6px solid;
+    transition: all 0.5s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.next-day-color-text {
+    font-size: 36px;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 2px;
+}
+
+.color-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 40px;
+    max-width: 500px;
+    width: 100%;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.legend-color {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid;
+    flex-shrink: 0;
+}
+
+.legend-color.bleu {
+    background-color: #0066CC;
+    border-color: #0066CC;
+}
+
+.legend-color.blanc {
+    background-color: #FFFFFF;
+    border-color: #CCCCCC;
+}
+
+.legend-color.rouge {
+    background-color: #DC143C;
+    border-color: #DC143C;
+}
+
+.legend-item span {
+    font-size: 16px;
+    color: #333;
+    font-weight: 500;
+}
+
+.bitcoin-panel {
+    width: 350px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 80px;
+}
+
+.bitcoin-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.bitcoin-title {
+    font-size: 28px;
+    color: #333;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.bitcoin-price {
+    font-size: 36px;
+    font-weight: 700;
+    color: #F7931A;
+    margin-bottom: 15px;
+}
+
+.bitcoin-change {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.bitcoin-change.positive {
+    color: #4CAF50;
+}
+
+.bitcoin-change.negative {
+    color: #DC143C;
+}
+
+.bitcoin-updated {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.bitcoin-refresh-button {
+    background-color: #F7931A;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.bitcoin-refresh-button:hover {
+    background-color: #e08316;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(247, 147, 26, 0.3);
+}
+
+.bitcoin-refresh-button:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 1024px) {
+    .main-layout {
+        flex-direction: column;
+    }
+    
+    .bitcoin-panel {
+        width: 100%;
+        position: relative;
+        top: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .tempo-title {
+        font-size: 36px;
+    }
+    
+    .tempo-colors-wrapper {
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .tempo-color-item {
+        max-width: 100%;
+    }
+    
+    .color-circle {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .color-text {
+        font-size: 28px;
+    }
+    
+    .tempo-date {
+        font-size: 14px;
+    }
+    
+    .bitcoin-price {
+        font-size: 28px;
+    }
+    
+    .next-day-title {
+        font-size: 20px;
+    }
+    
+    .next-day-color-circle {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .next-day-color-text {
+        font-size: 28px;
+    }
+    
+    .next-day-date {
+        font-size: 14px;
+    }
+}
